@@ -32,10 +32,14 @@ def inference_tag2text(image, model, input_tag="None"):
 
 def inference_ram(image, model):
 
-    with torch.no_grad():
-        tags, tags_chinese = model.generate_tag(image)
+    # with torch.no_grad():
+    #     tags, tags_chinese = model.generate_tag(image)
 
-    return tags[0],tags_chinese[0]
+    # return tags[0],tags_chinese[0]
+    with torch.no_grad():
+        tags, chinese_tags, tag_importance = model.generate_tag(image)
+    
+    return tags, chinese_tags, tag_importance
 
 
 def inference_ram_openset(image, model):

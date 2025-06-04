@@ -303,19 +303,59 @@ class RAM(nn.Module):
 
         return loss_t2t, loss_tag, loss_dis
 
-    def generate_tag(self,
-                 image,
-                 threshold=0.68,
-                 tag_input=None,
-                 ):
+    # def generate_tag(self,
+    #              image,
+    #              threshold=0.68,
+    #              tag_input=None,
+    #              ):
             
+    #     label_embed = torch.nn.functional.relu(self.wordvec_proj(self.label_embed))
+
+    #     image_embeds = self.image_proj(self.visual_encoder(image))
+    #     image_atts = torch.ones(image_embeds.size()[:-1],
+    #                             dtype=torch.long).to(image.device)
+
+    #     # recognized image tags using image-tag recogntiion decoder
+    #     image_cls_embeds = image_embeds[:, 0, :]
+    #     image_spatial_embeds = image_embeds[:, 1:, :]
+
+    #     bs = image_spatial_embeds.shape[0]
+    #     label_embed = label_embed.unsqueeze(0).repeat(bs, 1, 1)
+    #     tagging_embed = self.tagging_head(
+    #         encoder_embeds=label_embed,
+    #         encoder_hidden_states=image_embeds,
+    #         encoder_attention_mask=image_atts,
+    #         return_dict=False,
+    #         mode='tagging',
+    #     )
+
+    #     logits = self.fc(tagging_embed[0]).squeeze(-1)
+
+    #     targets = torch.where(
+    #         torch.sigmoid(logits) > self.class_threshold.to(image.device),
+    #         torch.tensor(1.0).to(image.device),
+    #         torch.zeros(self.num_class).to(image.device))
+
+    #     tag = targets.cpu().numpy()
+    #     tag[:,self.delete_tag_index] = 0
+    #     tag_output = []
+    #     tag_output_chinese = []
+    #     for b in range(bs):
+    #         index = np.argwhere(tag[b] == 1)
+    #         token = self.tag_list[index].squeeze(axis=1)
+    #         tag_output.append(' | '.join(token))
+    #         token_chinese = self.tag_list_chinese[index].squeeze(axis=1)
+    #         tag_output_chinese.append(' | '.join(token_chinese))
+
+
+    #     return tag_output, tag_output_chinese
+    def generate_tag(self, image, threshold=0.68, tag_input=None):
         label_embed = torch.nn.functional.relu(self.wordvec_proj(self.label_embed))
 
         image_embeds = self.image_proj(self.visual_encoder(image))
-        image_atts = torch.ones(image_embeds.size()[:-1],
-                                dtype=torch.long).to(image.device)
+        image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(image.device)
 
-        # recognized image tags using image-tag recogntiion decoder
+        # Recognized image tags using image-tag recognition decoder
         image_cls_embeds = image_embeds[:, 0, :]
         image_spatial_embeds = image_embeds[:, 1:, :]
 
@@ -330,25 +370,31 @@ class RAM(nn.Module):
         )
 
         logits = self.fc(tagging_embed[0]).squeeze(-1)
+        probabilities = torch.sigmoid(logits)  # Tính xác suất bằng sigmoid
 
         targets = torch.where(
-            torch.sigmoid(logits) > self.class_threshold.to(image.device),
+            probabilities > self.class_threshold.to(image.device),
             torch.tensor(1.0).to(image.device),
-            torch.zeros(self.num_class).to(image.device))
+            torch.zeros(self.num_class).to(image.device)
+        )
 
         tag = targets.cpu().numpy()
-        tag[:,self.delete_tag_index] = 0
+        tag[:, self.delete_tag_index] = 0
         tag_output = []
         tag_output_chinese = []
+        tag_importance = []  # Lưu độ quan trọng của các tag
+
         for b in range(bs):
             index = np.argwhere(tag[b] == 1)
             token = self.tag_list[index].squeeze(axis=1)
             tag_output.append(' | '.join(token))
             token_chinese = self.tag_list_chinese[index].squeeze(axis=1)
             tag_output_chinese.append(' | '.join(token_chinese))
+            # Lưu xác suất của các tag được chọn
+            importance = probabilities[b][index].squeeze(axis=1).cpu().numpy()
+            tag_importance.append(dict(zip(token, importance)))
 
-
-        return tag_output, tag_output_chinese
+        return tag_output, tag_output_chinese, tag_importance    
 
     def generate_tag_openset(self,
                  image,
