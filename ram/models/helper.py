@@ -1,5 +1,8 @@
 import torch
-
+import logging
+import torch
+import torch.nn as nn
+from transformers import modeling_utils
 
 def find_pruneable_heads_and_indices(
     heads: list[int],
@@ -39,12 +42,6 @@ def find_pruneable_heads_and_indices(
 
     index = torch.arange(n_heads * head_size)[mask.view(-1)].long()
     return heads, index
-
-
-import logging
-import torch
-import torch.nn as nn
-from transformers import modeling_utils
 
 # ------------------------------------------------------------------------------
 # 1. Define Fallback Implementations
