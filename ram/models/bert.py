@@ -37,10 +37,9 @@ from transformers.modeling_outputs import (
     TokenClassifierOutput,
 )
 from transformers.pytorch_utils import apply_chunking_to_forward
-from .helper import find_pruneable_heads_and_indices
+from .helper import find_pruneable_heads_and_indices, _prune_linear_layer
 from transformers.modeling_utils import (
     PreTrainedModel,
-    prune_linear_layer,
 )
 from transformers.utils import logging
 from transformers.models.bert.configuration_bert import BertConfig
@@ -310,10 +309,10 @@ class BertAttention(nn.Module):
         )
 
         # Prune linear layers
-        self.self.query = prune_linear_layer(self.self.query, index)
-        self.self.key = prune_linear_layer(self.self.key, index)
-        self.self.value = prune_linear_layer(self.self.value, index)
-        self.output.dense = prune_linear_layer(self.output.dense, index, dim=1)
+        self.self.query = _prune_linear_layer(self.self.query, index)
+        self.self.key = _prune_linear_layer(self.self.key, index)
+        self.self.value = _prune_linear_layer(self.self.value, index)
+        self.output.dense = _prune_linear_layer(self.output.dense, index, dim=1)
 
         # Update hyper params and store pruned heads
         self.self.num_attention_heads = self.self.num_attention_heads - len(heads)
