@@ -37,7 +37,6 @@ from transformers.modeling_outputs import (
     TokenClassifierOutput,
 )
 from transformers.pytorch_utils import apply_chunking_to_forward
-from transformers.utils import apply_chunking_to_forward
 from transformers.modeling_utils import (
     PreTrainedModel,
     find_pruneable_heads_and_indices,
