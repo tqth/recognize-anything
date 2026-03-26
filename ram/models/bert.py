@@ -37,7 +37,8 @@ from transformers.modeling_outputs import (
     TokenClassifierOutput,
 )
 from transformers.pytorch_utils import apply_chunking_to_forward
-from .helper import find_pruneable_heads_and_indices, _prune_linear_layer
+from .helper import find_pruneable_heads_and_indices
+from .helper2 import _prune_linear_layer
 from transformers.modeling_utils import (
     PreTrainedModel,
 )
